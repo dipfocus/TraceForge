@@ -1,6 +1,7 @@
 # <img src="assets/trace_forge_logo.png" alt="TraceForge" height="25"> TraceForge
 
-TraceForge is a unified dataset pipeline that converts cross-embodiment videos into consistent 3D traces via camera motion compensation and speed retargeting.
+TraceForge is a unified dataset pipeline that converts cross-embodiment videos into consistent 3D traces via camera motion compensation and speed retargeting. 
+For model training on the processed datasets, please refer to [TraceGen](https://github.com/jayLEE0301/TraceGen).
 
 **Project Website**: [tracegen.github.io](https://tracegen.github.io/)  
 **arXiv**: [2511.21690](https://arxiv.org/abs/2511.21690)
