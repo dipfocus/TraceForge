@@ -4,7 +4,7 @@
 Examples:
     python tools/record_realsense.py
     python tools/record_realsense.py --output-mode video --output data/realsense/demo.mp4 --preview --show-depth
-    python tools/record_realsense.py --frames-dir data/realsense/demo_frames --save-depth
+    python tools/record_realsense.py --frames-dir data/realsense/demo --save-depth
     python tools/record_realsense.py --list-devices
 """
 
@@ -53,13 +53,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--save-depth",
         action="store_true",
-        help="Save depth frames aligned to the RGB stream for infer.py --depth_path.",
-    )
-    parser.add_argument(
-        "--depth-dir",
-        type=Path,
-        default=None,
-        help="Directory to save aligned 16-bit depth PNGs such as YYYYMMDD_HHMMSS_mmm.png. If omitted, a timestamp-based directory is derived from --output or --frames-dir.",
+        help="Save depth frames aligned to the RGB stream for infer.py --depth_path. Depth PNGs are written to a depth/ subdirectory under the resolved RGB frame directory, for example data/<timestamp>/depth.",
     )
     parser.add_argument(
         "--duration",
@@ -172,25 +166,18 @@ def choose_codec(output_path: Path, codec_override: str | None) -> str:
 
 def resolve_depth_dir(
     args: argparse.Namespace,
-    video_path: Path | None,
     frames_dir: Path | None,
 ) -> Path | None:
-    save_depth = args.save_depth or args.depth_dir is not None
-    if not save_depth:
+    if not args.save_depth:
         return None
 
-    if args.depth_dir is not None:
-        return args.depth_dir.expanduser().resolve()
-
     if frames_dir is not None:
-        return frames_dir.with_name(f"{frames_dir.name}_depth")
-
-    if video_path is not None:
-        return video_path.with_name(f"{video_path.stem}_depth")
+        return frames_dir / "depth"
 
     output_path = args.output.expanduser()
-    base_path = output_path.with_suffix("") if output_path.suffix else output_path
-    return base_path.resolve().with_name(f"{base_path.name}_depth")
+    if output_path.suffix:
+        return output_path.with_suffix("").resolve() / "depth"
+    return output_path.resolve() / "depth"
 
 
 def resolve_output_paths(args: argparse.Namespace) -> tuple[Path | None, Path | None, Path]:
@@ -326,7 +313,7 @@ def main() -> int:
     save_video = args.output_mode in {"video", "both"}
     save_frames = args.output_mode in {"frames", "both"}
     video_path, frames_dir, metadata_path = resolve_output_paths(args)
-    depth_dir = resolve_depth_dir(args, video_path, frames_dir)
+    depth_dir = resolve_depth_dir(args, frames_dir)
     save_depth = depth_dir is not None
     if video_path is not None:
         video_path.parent.mkdir(parents=True, exist_ok=True)

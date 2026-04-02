@@ -72,7 +72,6 @@ wget -O checkpoints/tapip3d_final.pth https://huggingface.co/zbww/tapip3d/resolv
   python tools/record_realsense.py \
       --frames-dir data/realsense/demo \
       --save-depth \
-      --depth-dir data/realsense/demo_depth \
       --preview \
       --show-depth
   ```
@@ -80,7 +79,7 @@ wget -O checkpoints/tapip3d_final.pth https://huggingface.co/zbww/tapip3d/resolv
   ```bash
   python infer.py \
       --video_path data/realsense/demo \
-      --depth_path data/realsense/demo_depth \
+      --depth_path data/realsense/demo/depth \
       --out_dir outputs/demo
   ```
 - Record for a fixed amount of time instead of stopping manually:
@@ -108,8 +107,7 @@ wget -O checkpoints/tapip3d_final.pth https://huggingface.co/zbww/tapip3d/resolv
 | `--output` | Base output path. Used to derive video path and/or frame directory when explicit paths are not provided. | `data/<timestamp>` |
 | `--output-mode` | Save `video`, `frames`, or `both`. | `frames` |
 | `--frames-dir` | Directory for RGB frames named like `YYYYMMDD_HHMMSS_mmm.png`. Passing `data` creates `data/<timestamp>/`. | Derived from `--output` |
-| `--save-depth` | Save aligned depth PNGs for use with `infer.py --depth_path`. | `False` |
-| `--depth-dir` | Directory for aligned depth PNGs. | Derived from `--output` or `--frames-dir` |
+| `--save-depth` | Save aligned depth PNGs to a `depth/` subdirectory under the resolved RGB frame directory, for example `data/<timestamp>/depth`. | `False` |
 | `--duration` | Recording duration in seconds. Use `0` to record until stopped manually. | `0` |
 | `--width` / `--height` / `--fps` | Requested stream resolution and FPS. | `1280 / 720 / 30` |
 | `--serial` | Target device serial number when multiple cameras are connected. | `None` |
@@ -122,7 +120,8 @@ wget -O checkpoints/tapip3d_final.pth https://huggingface.co/zbww/tapip3d/resolv
 - Frame folders produced by `tools/record_realsense.py` can be passed directly to `infer.py --video_path`.
 - `--frames-dir data` is treated as a base directory, and the recorder creates `data/<timestamp>/` automatically.
 - If `--output-mode video` is used and `--output` has no suffix, the recorder writes an `.mp4` file automatically.
-- If `--save-depth` is enabled without `--depth-dir`, the recorder creates a sibling folder with the `_depth` suffix.
+- If `--save-depth` is enabled, the recorder creates a `depth/` subdirectory under the resolved RGB frame directory.
+- With `--frames-dir data`, depth is written to `data/<timestamp>/depth/`.
 - If OpenCV preview is unavailable in the current environment, recording continues without the preview window.
 
 **Case A: videos directly in the input folder**
