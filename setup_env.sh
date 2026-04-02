@@ -14,7 +14,7 @@ pip install av typed-argument-parser tqdm scipy h5py kornia
 pip install sophuspy trimesh
 pip install "python-box[all]~=7.0"
 pip install wandb loguru
-pip install opencv-python einops matplotlib Pillow
+pip install opencv-python einops matplotlib Pillow pyrealsense2
 pip install viser mediapy
 pip install scikit-learn
 

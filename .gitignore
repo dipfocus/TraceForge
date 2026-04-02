@@ -6,3 +6,13 @@ third_party/pointops2/dist
 checkpoints/
 test*/
 .env
+
+# Generated images and numpy archives
+*.png
+*.jpg
+*.jpeg
+*.bmp
+*.webp
+*.tif
+*.tiff
+*.npz
