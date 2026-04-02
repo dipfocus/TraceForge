@@ -48,7 +48,7 @@ def parse_args() -> argparse.Namespace:
         "--frames-dir",
         type=Path,
         default=None,
-        help="Directory to save infer.py-compatible image frames such as YYYYMMDD_HHMMSS_mmm.png. If omitted, a timestamp-based directory is derived from --output.",
+        help="Directory to save infer.py-compatible image frames such as YYYYMMDD_HHMMSS_mmm.png. If omitted, a timestamp-based directory is derived from --output. Passing data/ creates data/<timestamp>/ automatically.",
     )
     parser.add_argument(
         "--save-depth",
@@ -103,7 +103,9 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="List connected RealSense devices and exit.",
     )
-    return parser.parse_args()
+    args = parser.parse_args()
+    args.recording_timestamp = timestamp
+    return args
 
 
 def require_realsense():
@@ -194,6 +196,11 @@ def resolve_depth_dir(
 def resolve_output_paths(args: argparse.Namespace) -> tuple[Path | None, Path | None, Path]:
     save_video = args.output_mode in {"video", "both"}
     save_frames = args.output_mode in {"frames", "both"}
+    recording_timestamp = getattr(
+        args,
+        "recording_timestamp",
+        datetime.now().strftime("%Y%m%d_%H%M%S"),
+    )
 
     output_path = args.output.expanduser()
     if save_video:
@@ -204,7 +211,12 @@ def resolve_output_paths(args: argparse.Namespace) -> tuple[Path | None, Path | 
 
     if save_frames:
         if args.frames_dir is not None:
-            frames_dir = args.frames_dir.expanduser().resolve()
+            requested_frames_dir = args.frames_dir.expanduser().resolve()
+            project_data_dir = Path("data").resolve()
+            if requested_frames_dir == project_data_dir:
+                frames_dir = requested_frames_dir / recording_timestamp
+            else:
+                frames_dir = requested_frames_dir
         elif output_path.suffix:
             frames_dir = output_path.expanduser().with_suffix("").resolve()
         else:

@@ -37,6 +37,12 @@ def parse_args():
         default=None,
         help="Path to depth directory (if known depth is provided) for batch processing or single video folder",
     )
+    parser.add_argument(
+        "--depth_png_scale",
+        type=float,
+        default=10000.0,
+        help="Decode 16-bit depth PNGs from --depth_path as meters via value / depth_png_scale.",
+    )
     parser.add_argument("--mask_dir", type=str, default=None)
     parser.add_argument(
         "--checkpoint", type=str, default="./checkpoints/tapip3d_final.pth"
@@ -426,14 +432,23 @@ def process_single_video(video_path, depth_path, args, model_3dtracker, model_de
 
     # Load RGB with computed stride
     video_tensor, video_mask, original_filenames = load_video_and_mask(
-        video_path, args.mask_dir, stride, args.max_num_frames
+        video_path,
+        args.mask_dir,
+        stride,
+        args.max_num_frames,
+        depth_png_scale=args.depth_png_scale,
     )
 
     # Load depth (if provided) with the SAME stride to keep alignment with RGB
     depth_tensor = None
     if depth_path is not None:
         depth_tensor, _, _ = load_video_and_mask(
-            depth_path, None, stride, args.max_num_frames, is_depth=True
+            depth_path,
+            None,
+            stride,
+            args.max_num_frames,
+            is_depth=True,
+            depth_png_scale=args.depth_png_scale,
         )  # [T, H, W]
         valid_depth = (depth_tensor > 0)
         depth_tensor[~valid_depth] = 0  # Invalidate bad depth values
@@ -447,7 +462,7 @@ def process_single_video(video_path, depth_path, args, model_3dtracker, model_de
         video_tensor,
         known_depth=depth_tensor,  # can be None
         stationary_camera=False,
-        replace_with_known_depth=False,  # if known depth is given, always replace
+        replace_with_known_depth=False,  # align scale to known depth but keep model-predicted depth map
     )
 
     # Keep depth_conf for visualization NPZ
@@ -702,7 +717,29 @@ def find_video_folders(base_path: str, scan_depth: int = 2):
     return video_folders
 
 
-def load_video_and_mask(video_path, mask_dir=None, fps=1, max_num_frames=384, is_depth=False):
+def load_depth_file(depth_path, depth_png_scale=10000.0):
+    raw_npz_path = os.path.splitext(depth_path)[0] + "_raw.npz"
+    if os.path.exists(raw_npz_path):
+        with np.load(raw_npz_path) as depth_data:
+            if "depth" in depth_data:
+                return depth_data["depth"].astype(np.float32)
+            return depth_data[depth_data.files[0]].astype(np.float32)
+
+    depth_img = Image.open(depth_path).convert("I;16")
+    depth = np.array(depth_img).astype(np.float32)
+    if depth_png_scale > 0:
+        depth /= float(depth_png_scale)
+    return depth
+
+
+def load_video_and_mask(
+    video_path,
+    mask_dir=None,
+    fps=1,
+    max_num_frames=384,
+    is_depth=False,
+    depth_png_scale=10000.0,
+):
     original_filenames = []
 
     if os.path.isdir(video_path):
@@ -715,14 +752,16 @@ def load_video_and_mask(video_path, mask_dir=None, fps=1, max_num_frames=384, is
 
         video_tensor = []
         for img_file in tqdm.tqdm(img_files, desc="Loading images"):
-            img = Image.open(img_file)
             if is_depth:
-                img = img.convert("I;16")  # 16-bit grayscale for depth
+                video_tensor.append(
+                    torch.from_numpy(load_depth_file(img_file, depth_png_scale)).float()
+                )
             else:
+                img = Image.open(img_file)
                 img = img.convert("RGB")
-            video_tensor.append(
-                torch.from_numpy(np.array(img)).float()
-            )
+                video_tensor.append(
+                    torch.from_numpy(np.array(img)).float()
+                )
             # Extract original filename without extension
             filename = os.path.splitext(os.path.basename(img_file))[0]
             original_filenames.append(filename)
