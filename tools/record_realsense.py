@@ -45,13 +45,6 @@ def parse_args() -> argparse.Namespace:
         help="Save video, frame directory, or both. Default: %(default)s",
     )
     parser.add_argument(
-        "--output-mode",
-        dest="mode",
-        type=str,
-        choices=("video", "frames", "both"),
-        help=argparse.SUPPRESS,
-    )
-    parser.add_argument(
         "--frames-dir",
         type=Path,
         default=None,
