@@ -3,7 +3,7 @@
 
 Examples:
     python tools/record_realsense.py
-    python tools/record_realsense.py --output-mode video --output data/realsense/demo.mp4 --preview --show-depth
+    python tools/record_realsense.py --mode video --output data/realsense/demo.mp4 --preview --show-depth
     python tools/record_realsense.py --frames-dir data/realsense/demo --save-depth
     python tools/record_realsense.py --list-devices
 """
@@ -38,11 +38,18 @@ def parse_args() -> argparse.Namespace:
         help="Base output path. Defaults to a timestamp-based path under data/ and is used to derive the video path and/or frame directories.",
     )
     parser.add_argument(
-        "--output-mode",
+        "--mode",
         type=str,
         default="frames",
         choices=("video", "frames", "both"),
         help="Save video, frame directory, or both. Default: %(default)s",
+    )
+    parser.add_argument(
+        "--output-mode",
+        dest="mode",
+        type=str,
+        choices=("video", "frames", "both"),
+        help=argparse.SUPPRESS,
     )
     parser.add_argument(
         "--frames-dir",
@@ -181,8 +188,8 @@ def resolve_depth_dir(
 
 
 def resolve_output_paths(args: argparse.Namespace) -> tuple[Path | None, Path | None, Path]:
-    save_video = args.output_mode in {"video", "both"}
-    save_frames = args.output_mode in {"frames", "both"}
+    save_video = args.mode in {"video", "both"}
+    save_frames = args.mode in {"frames", "both"}
     recording_timestamp = getattr(
         args,
         "recording_timestamp",
@@ -310,8 +317,8 @@ def main() -> int:
 
     ensure_requested_device_exists(args.serial)
 
-    save_video = args.output_mode in {"video", "both"}
-    save_frames = args.output_mode in {"frames", "both"}
+    save_video = args.mode in {"video", "both"}
+    save_frames = args.mode in {"frames", "both"}
     video_path, frames_dir, metadata_path = resolve_output_paths(args)
     depth_dir = resolve_depth_dir(args, frames_dir)
     save_depth = depth_dir is not None
@@ -373,7 +380,8 @@ def main() -> int:
 
     metadata.update(
         {
-            "output_mode": args.output_mode,
+            "mode": args.mode,
+            "output_mode": args.mode,
             "video_output_path": str(video_path) if video_path is not None else None,
             "frames_dir": str(frames_dir) if frames_dir is not None else None,
             "save_depth": save_depth,

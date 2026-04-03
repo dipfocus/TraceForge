@@ -58,7 +58,7 @@ wget -O checkpoints/tapip3d_final.pth https://huggingface.co/zbww/tapip3d/resolv
 - Record an `mp4` that can be passed directly to `infer.py`:
   ```bash
   python tools/record_realsense.py \
-      --output-mode video \
+      --mode video \
       --output data/realsense/demo.mp4 \
       --preview \
       --show-depth
@@ -96,7 +96,7 @@ wget -O checkpoints/tapip3d_final.pth https://huggingface.co/zbww/tapip3d/resolv
       --frames-dir data/realsense/demo \
       --preview
   ```
-- Use `--output-mode both` to save both the `mp4` and the frame folder in one run.
+- Use `--mode both` to save both the `mp4` and the frame folder in one run.
 - Saved depth frames are aligned to RGB and encoded as 16-bit PNG with the same `/10000` convention used by TraceForge visualization outputs.
 - The recorder also writes metadata with device info and intrinsics. When saving video, it is stored as a sidecar `.json`; when saving only frames, it is written to `recording_metadata.json` inside the frame folder.
 
@@ -105,7 +105,7 @@ wget -O checkpoints/tapip3d_final.pth https://huggingface.co/zbww/tapip3d/resolv
 | Argument | Description | Default |
 |----------|-------------|---------|
 | `--output` | Base output path. Used to derive video path and/or frame directory when explicit paths are not provided. | `data/<timestamp>` |
-| `--output-mode` | Save `video`, `frames`, or `both`. | `frames` |
+| `--mode` | Save `video`, `frames`, or `both`. | `frames` |
 | `--frames-dir` | Directory for RGB frames named like `YYYYMMDD_HHMMSS_mmm.png`. Passing `data` creates `data/<timestamp>/`. | Derived from `--output` |
 | `--save-depth` | Save aligned depth PNGs to a `depth/` subdirectory under the resolved RGB frame directory, for example `data/<timestamp>/depth`. | `False` |
 | `--duration` | Recording duration in seconds. Use `0` to record until stopped manually. | `0` |
@@ -119,7 +119,7 @@ wget -O checkpoints/tapip3d_final.pth https://huggingface.co/zbww/tapip3d/resolv
 **Output notes**
 - Frame folders produced by `tools/record_realsense.py` can be passed directly to `infer.py --video_path`.
 - `--frames-dir data` is treated as a base directory, and the recorder creates `data/<timestamp>/` automatically.
-- If `--output-mode video` is used and `--output` has no suffix, the recorder writes an `.mp4` file automatically.
+- If `--mode video` is used and `--output` has no suffix, the recorder writes an `.mp4` file automatically.
 - If `--save-depth` is enabled, the recorder creates a `depth/` subdirectory under the resolved RGB frame directory.
 - With `--frames-dir data`, depth is written to `data/<timestamp>/depth/`.
 - If OpenCV preview is unavailable in the current environment, recording continues without the preview window.
