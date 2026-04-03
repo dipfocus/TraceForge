@@ -67,6 +67,13 @@ wget -O checkpoints/tapip3d_final.pth https://huggingface.co/zbww/tapip3d/resolv
   ```bash
   python infer.py --video_path data/demo --out_dir outputs/demo
   ```
+- To turn an existing frame folder into an `mp4` later:
+  ```bash
+  python tools/frames_to_video.py \
+      --frames-dir data/realsense/demo \
+      --output data/realsense/demo.mp4
+  ```
+- If `data/realsense/demo/recording_metadata.json` exists, the tool reuses its recorded `fps` automatically unless you pass `--fps`.
 - To save aligned depth for `infer.py --depth_path` at the same time:
   ```bash
   python tools/record_realsense.py \
